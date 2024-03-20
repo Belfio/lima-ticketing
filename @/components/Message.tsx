@@ -87,7 +87,7 @@ const SlackMessage: React.FC<SlackMessageProps> = ({
               )}
               {message.link && (
                 <div className="ml-1 text-gray-500 text-xs hover:underline w-[11px] h-[10px] ">
-                  <NavLink to={message.link} target="_blank">
+                  <NavLink to={message.link} target="_blank" rel="noreferrer">
                     <ExternalLink className="w-[11px] h-[12px]" />
                   </NavLink>
                 </div>

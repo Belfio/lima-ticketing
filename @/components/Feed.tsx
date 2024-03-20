@@ -1,17 +1,17 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useFetcher } from "@remix-run/react";
-import { ArrowDown, ArrowUp } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, isSameDay, newId } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Button } from "@/components/ui/button";
-import SlackAnswer from "./SlackAnswer";
-import SlackEmpty from "./SlackEmpty";
-import SlackMessage from "./SlackMessage";
+import SlackAnswer from "./MessageAnswer";
+import SlackEmpty from "./MessageEmpty";
+import SlackMessage from "./Message";
 import DialogPublish from "./DialogPublish";
 import { CommunityType, MessageType } from "@/lib/types";
 import DialogTrainBot from "./DialogTrainBot";
-import SlackMessageThread from "./SlackMessageThread";
+import SlackMessageThread from "./MessageThread";
+import SeparatorDate from "./MessageSeparatorDate";
+import Controller from "./Controller";
 
 export default function Feed({
   className,
@@ -23,7 +23,7 @@ export default function Feed({
 }: {
   className?: string;
   notActive?: boolean;
-  messages?: MessageType[] | [];
+  messages?: MessageType[];
   community: CommunityType;
   setWriting: (flag: boolean) => void;
   filters: {
@@ -64,106 +64,6 @@ export default function Feed({
   }, [filters.hideArchived, filters.hideNonRequests]);
 
   useEffect(() => {
-    const handleKey = (e: React.KeyboardEvent) => {
-      if (e.key === "ArrowDown") {
-        console.log("arrowDown");
-        e.preventDefault();
-
-        arrowDown();
-        return;
-      }
-      if (e.key === "ArrowUp") {
-        e.preventDefault();
-        arrowUp();
-        return;
-      }
-      if (e.key === "Enter") {
-        e.preventDefault();
-
-        if (messages[msgIndex]?.status === "ARCHIVED") return;
-        // if (messages[msgIndex].answer?.status === "PUBLISHED") return;
-        if (isTrainBot) {
-          console.log("navigate to train");
-          navigate("/train");
-          return;
-        }
-        if (isAlertPublishOpen) {
-          (async () => {
-            await publish();
-          })();
-          setIsAlertPublishOpen(false);
-          return;
-        }
-        if (focusedAnswerId !== "" && focusedId !== "") {
-          setIsAlertPublishOpen(true);
-          return;
-        }
-        setFocusedAnswerId(messages[msgIndex].id);
-        setKeyState("Enter");
-        return;
-      }
-      if (e.key === "Escape") {
-        e.preventDefault();
-        setIsAlertPublishOpen(false);
-        if (focusedAnswerId !== "") {
-          setFocusedAnswerId("");
-          (async () => {
-            await updateAnswer();
-          })();
-          setFocusedId(messages[msgIndex].id);
-        } else if (
-          keyState === "ArrowDown" ||
-          keyState === "ArrowUp" ||
-          keyState === "Escape"
-        ) {
-          setFocusedAnswerId("");
-          setFocusedId("");
-        }
-        setKeyState("Escape");
-        return;
-      }
-      if (e.key === "Tab") {
-        e.preventDefault();
-        (async () => {
-          await generate();
-        })();
-        return;
-      }
-      if (e.key === "a") {
-        if (focusedAnswerId === "" && focusedId !== "") {
-          e.preventDefault();
-          (async () => {
-            await archive();
-          })();
-        }
-        return;
-      }
-      if (e.key === "u") {
-        if (focusedAnswerId === "" && focusedId !== "") {
-          e.preventDefault();
-          (async () => {
-            await unarchive();
-          })();
-        }
-        return;
-      }
-      if (e.key === "r") {
-        if (focusedAnswerId === "" && focusedId !== "") {
-          e.preventDefault();
-          const msg = messages.filter((m) => m.id === focusedId)[0];
-          if (msg.status === "OPPORTUNITY") {
-            (async () => {
-              await nonrelevant();
-            })();
-          } else {
-            (async () => {
-              await relevant();
-            })();
-          }
-        }
-        return;
-      }
-    };
     window.addEventListener("keydown", handleKey);
     return () => {
       window.removeEventListener("keydown", handleKey);
@@ -196,6 +96,107 @@ export default function Feed({
     }
   }, [focusedAnswerId]);
 
+  const handleKey = (e: KeyboardEvent) => {
+    if (e.key === "ArrowDown") {
+      console.log("arrowDown");
+      e.preventDefault();
+
+      arrowDown();
+      return;
+    }
+    if (e.key === "ArrowUp") {
+      e.preventDefault();
+      arrowUp();
+      return;
+    }
+    if (e.key === "Enter") {
+      e.preventDefault();
+
+      if (messages[msgIndex]?.status === "ARCHIVED") return;
+      // if (messages[msgIndex].answer?.status === "PUBLISHED") return;
+      if (isTrainBot) {
+        console.log("navigate to train");
+        navigate("/train");
+        return;
+      }
+      if (isAlertPublishOpen) {
+        (async () => {
+          await publish();
+        })();
+        setIsAlertPublishOpen(false);
+        return;
+      }
+      if (focusedAnswerId !== "" && focusedId !== "") {
+        setIsAlertPublishOpen(true);
+        return;
+      }
+      setFocusedAnswerId(messages[msgIndex].messageId);
+      setKeyState("Enter");
+      return;
+    }
+    if (e.key === "Escape") {
+      e.preventDefault();
+      setIsAlertPublishOpen(false);
+      if (focusedAnswerId !== "") {
+        setFocusedAnswerId("");
+        (async () => {
+          await updateAnswer();
+        })();
+        setFocusedId(messages[msgIndex].messageId);
+      } else if (
+        keyState === "ArrowDown" ||
+        keyState === "ArrowUp" ||
+        keyState === "Escape"
+      ) {
+        setFocusedAnswerId("");
+        setFocusedId("");
+      }
+      setKeyState("Escape");
+      return;
+    }
+    if (e.key === "Tab") {
+      e.preventDefault();
+      (async () => {
+        await generate();
+      })();
+      return;
+    }
+    if (e.key === "a") {
+      if (focusedAnswerId === "" && focusedId !== "") {
+        e.preventDefault();
+        (async () => {
+          await archive();
+        })();
+      }
+      return;
+    }
+    if (e.key === "u") {
+      if (focusedAnswerId === "" && focusedId !== "") {
+        e.preventDefault();
+        (async () => {
+          await unarchive();
+        })();
+      }
+      return;
+    }
+    if (e.key === "r") {
+      if (focusedAnswerId === "" && focusedId !== "") {
+        e.preventDefault();
+        const msg = messages.filter((m) => m.messageId === focusedId)[0];
+        if (msg.status === "OPPORTUNITY") {
+          (async () => {
+            await nonrelevant();
+          })();
+        } else {
+          (async () => {
+            await relevant();
+          })();
+        }
+      }
+      return;
+    }
+  };
+
   const arrowDown = () => {
     if (msgIndex === messages.length - 1) return;
     if (focusedAnswerId !== "") {
@@ -205,7 +206,7 @@ export default function Feed({
       })();
     }
     setFocusedAnswerId("");
-    setFocusedId(messages[msgIndex + 1].id);
+    setFocusedId((messages[msgIndex + 1] as MessageType).messageId);
 
     setIndex((currentIndex) => currentIndex + 1);
     setKeyState("ArrowDown");
@@ -223,7 +224,7 @@ export default function Feed({
       })();
     }
     setFocusedAnswerId("");
-    setFocusedId(messages[msgIndex - 1].id);
+    setFocusedId(messages[msgIndex - 1].messageId);
 
     setIndex((currentIndex) => currentIndex - 1);
     setKeyState("ArrowUp");
@@ -237,9 +238,9 @@ export default function Feed({
   };
   const archive = async () => {
     try {
-      const id = messages[msgIndex].id;
+      const id = messages[msgIndex].messageId;
       const newMsgs = msgs.map((m) => {
-        if (m.id === id) {
+        if (m.messageId === id) {
           return {
             ...m,
             answer: m.answer,
@@ -253,7 +254,7 @@ export default function Feed({
       const formData = new FormData();
       formData.append("creationDate", String(messages[msgIndex].creationDate));
       formData.append("button", "ARCHIVE");
-      formData.append("id", community.id);
+      formData.append("id", community.communityId);
       fetcher.submit(formData, { method: "post" });
     } catch (error) {
       console.log("error archiving", error);
@@ -262,9 +263,9 @@ export default function Feed({
 
   const unarchive = async () => {
     try {
-      const id = messages[msgIndex].id;
+      const id = messages[msgIndex].messageId;
       const newMsgs = msgs.map((m) => {
-        if (m.id === id) {
+        if (m.messageId === id) {
           return {
             ...m,
             answer: m.answer,
@@ -278,7 +279,7 @@ export default function Feed({
       const formData = new FormData();
       formData.append("creationDate", messages[msgIndex].creationDate);
       formData.append("button", "UNARCHIVE");
-      formData.append("id", community.id);
+      formData.append("id", community.communityId);
       fetcher.submit(formData, { method: "post" });
     } catch (error) {
       console.log("error archiving", error);
@@ -287,9 +288,9 @@ export default function Feed({
 
   const relevant = async () => {
     try {
-      const id = messages[msgIndex].id;
+      const id = messages[msgIndex].messageId;
       const newMsgs = msgs.map((m) => {
-        if (m.id === id) {
+        if (m.messageId === id) {
           return {
             ...m,
             opportunity: true,
@@ -303,7 +304,7 @@ export default function Feed({
       const formData = new FormData();
       formData.append("creationDate", messages[msgIndex].creationDate);
       formData.append("button", "RELEVANT");
-      formData.append("id", community.id);
+      formData.append("id", community.communityId);
       fetcher.submit(formData, { method: "post" });
     } catch (error) {
       console.log("error archiving", error);
@@ -312,9 +313,9 @@ export default function Feed({
 
   const nonrelevant = async () => {
     try {
-      const id = messages[msgIndex].id;
+      const id = messages[msgIndex].messageId;
       const newMsgs = msgs.map((m) => {
-        if (m.id === id) {
+        if (m.messageId === id) {
           return {
             ...m,
             opportunity: false,
@@ -328,7 +329,7 @@ export default function Feed({
       const formData = new FormData();
       formData.append("creationDate", messages[msgIndex].creationDate);
       formData.append("button", "NONRELEVANT");
-      formData.append("id", community.id);
+      formData.append("id", community.communityId);
       fetcher.submit(formData, { method: "post" });
     } catch (error) {
       console.log("error archiving", error);
@@ -336,7 +337,7 @@ export default function Feed({
   };
 
   const updateAnswer = async () => {
-    const msg: MessageType = msgs.filter((m) => m.id === focusedId)[0];
+    const msg: MessageType = msgs.filter((m) => m.messageId === focusedId)[0];
     const answer = msg.answer;
     if (!msg) return;
     try {
@@ -353,9 +354,9 @@ export default function Feed({
   const publish = async () => {
     console.log("publish");
     try {
-      const id = messages[msgIndex].id;
-      const newMsgs = msgs.map((m) => {
-        if (m.id === id) {
+      const id = messages[msgIndex].messageId;
+      const newMsgs: MessageType[] = msgs.map((m) => {
+        if (m.messageId === id) {
           return {
             ...m,
             status: "PUBLISHING",
@@ -367,7 +368,7 @@ export default function Feed({
       });
       setMsgs(newMsgs);
       setIsAlertPublishOpen(false);
-      const newMsg = newMsgs.filter((m) => m.id === id)[0];
+      const newMsg = newMsgs.filter((m) => m.messageId === id)[0];
       if (!newMsg) throw new Error("no message found");
       const formData = new FormData();
       formData.append("creationDate", newMsg.creationDate);
@@ -381,21 +382,18 @@ export default function Feed({
   };
 
   const generate = async () => {
-    if (community.trainingSettings?.trainingStatus !== "TRAINED") {
+    if (community.settings.traininng.status !== "TRAINED") {
       setTrainBot(true);
       return;
     }
 
     try {
-      const id = messages[msgIndex].id;
-      const newMsgs = msgs.map((m) => {
-        if (m.id === id) {
+      const id = messages[msgIndex].messageId;
+      const newMsgs: MessageType[] = msgs.map((m) => {
+        if (m.messageId === id) {
           return {
             ...m,
-            answer: {
-              ...m.answer,
-              status: "GENERATING",
-            },
+            status: "GENERATING",
           };
         } else {
           return m;
@@ -403,13 +401,13 @@ export default function Feed({
       });
       setMsgs(newMsgs);
 
-      const newMsg = newMsgs.filter((m) => m.id === id)[0];
+      const newMsg = newMsgs.filter((m) => m.messageId === id)[0];
       if (!newMsg) throw new Error("no message found");
       const formData = new FormData();
       formData.append("creationDate", newMsg.creationDate);
-      formData.append("answer", newMsg.answer?.message);
+      formData.append("answer", String(newMsg.answer?.message));
       formData.append("button", "GENERATE");
-      formData.append("id", community.id);
+      formData.append("id", community.communityId);
       fetcher.submit(formData, { method: "post" });
     } catch (error) {
       console.log("error archiving", error);
@@ -428,31 +426,7 @@ export default function Feed({
 
   return (
     <div className={cn("w-full mt-4", className)}>
-      <div className="flex justify-between items-center">
-        <div className="flex items-center justify-start"></div>
-        <div className="flex items-center justify-end">
-          <Button
-            variant="ghost"
-            className="text-gray-500 font-bold text-xs select-none"
-            onClick={arrowUp}
-          >
-            Select the messages with Up
-            <div className="border-solid border-gray-500 border-[1px] rounded-md p-1 ml-1 w-[24px] h-[24px] text-center">
-              <ArrowUp className="w-[14px] h-[14px] font-normal " />
-            </div>
-          </Button>
-          <Button
-            variant="ghost"
-            className="text-gray-500 font-bold text-xs"
-            onClick={arrowDown}
-          >
-            and Down
-            <div className="border-solid border-gray-500 border-[1px] rounded-md p-1 ml-1 w-[24px] h-[24px] text-center">
-              <ArrowDown className="w-[14px] h-[14px] font-normal " />
-            </div>
-          </Button>
-        </div>
-      </div>
+      <Controller arrowDown={arrowDown} arrowUp={arrowUp} />
       <div className="w-full  sm:flex ">
         {/* <div className="w-0 sm:w-24 bg-[#3A123E] sm:h-auto text-white font-bold text-sm p-2 hidden sm:block"></div> */}
         <div
@@ -492,7 +466,9 @@ export default function Feed({
                 open={isAlertPublishOpen}
                 closeDialog={() => setIsAlertPublishOpen(false)}
                 msg={
-                  msgs.filter((m) => m.id === focusedAnswerId)[0] as MessageType
+                  msgs.filter(
+                    (m) => m.messageId === focusedAnswerId
+                  )[0] as MessageType
                 }
               />
               <DialogTrainBot open={isTrainBot} closeDialog={setTrainBot} />
@@ -507,44 +483,31 @@ export default function Feed({
   );
 }
 
-const MessageDate = ({ date }: { date: string }) => {
-  return (
-    <div className="relative h-4 w-full mt-4">
-      <div className="absolute z-10 w-full">
-        <div className="m-auto border border-solid rounded-3xl bg-white card-shadow text-center font-bold w-fit px-4 py-1 text-xs sm:text-sm">
-          {new Date(date)
-            .toLocaleDateString("en-US", {
-              weekday: "long",
-              year: "numeric",
-              month: "long",
-              day: "numeric",
-            })
-            .toString()}
-        </div>
-      </div>
-      <Separator className="w-full absolute mt-4 z-0" />
-    </div>
-  );
-};
-
 const MessagesAndDayComponents = (
   messages: MessageType[],
   community: CommunityType,
   focusedId: string,
   focusedAnswerId: string,
-  setMsgs: Function,
-  clickSelect: Function,
-  back: Function
+  setMsgs: (msgs: MessageType[]) => void,
+  clickSelect: (id: string) => void,
+  back: () => void
 ) => {
-  const ComponentsArray: any[] = [];
+  const ComponentsArray: React.ReactNode[] = [];
   const setAnswer = (newAnswer: string) => {
-    const newMsgs = messages.map((m) => {
-      if (m.id === focusedId) {
+    const newMsgs: MessageType[] = messages.map((m) => {
+      if (m.messageId === focusedId) {
         return {
           ...m,
           answer: {
+            messageId: String(newId()),
+            creationDate: new Date().toISOString(),
+            author: community.communityId,
+            communityId: community.communityId,
+            threadId: m.threadId || undefined,
+            channel: m.channel,
+            status: "PENDING",
             ...m.answer,
-            message: newAnswer,
+            message: String(newAnswer),
           },
         };
       } else {
@@ -553,25 +516,25 @@ const MessagesAndDayComponents = (
     });
     setMsgs(newMsgs);
   };
-  messages.forEach((m: StoredMessageType, index: number) => {
+  messages.forEach((m: MessageType, index: number) => {
     if (index === 0) {
       ComponentsArray.push(
-        <MessageDate date={m.creationDate} key={index + "msg"} />
+        <SeparatorDate date={m.creationDate} key={index + "msg"} />
       );
       ComponentsArray.push(
         <div key={index}>
           <SlackMessage
             message={m}
-            focus={focusedId === m.id}
-            focusAnswer={focusedAnswerId === m.id}
-            onClick={() => clickSelect(m.id)}
+            focus={focusedId === m.messageId}
+            focusAnswer={focusedAnswerId === m.messageId}
+            onClick={() => clickSelect(m.messageId)}
             back={() => back()}
           >
             {m.thread && <SlackMessageThread messages={m.thread} />}
             <SlackAnswer
               answer={m.answer}
               event={m}
-              focus={focusedAnswerId === m.id}
+              focus={focusedAnswerId === m.messageId}
               updateAnswer={setAnswer}
             />
           </SlackMessage>
@@ -580,15 +543,15 @@ const MessagesAndDayComponents = (
     } else {
       if (!isSameDay(m.creationDate, messages[index - 1].creationDate)) {
         ComponentsArray.push(
-          <MessageDate date={m.creationDate} key={index + "msg1"} />
+          <SeparatorDate date={m.creationDate} key={index + "msg1"} />
         );
         ComponentsArray.push(
           <div key={index}>
             <SlackMessage
               message={m}
-              focus={focusedId === m.id}
-              focusAnswer={focusedAnswerId === m.id}
-              onClick={() => clickSelect(m.id)}
+              focus={focusedId === m.messageId}
+              focusAnswer={focusedAnswerId === m.messageId}
+              onClick={() => clickSelect(m.messageId)}
               back={() => back()}
             >
               {m.thread && <SlackMessageThread messages={m.thread} />}
@@ -596,7 +559,7 @@ const MessagesAndDayComponents = (
               <SlackAnswer
                 answer={m?.answer}
                 event={m}
-                focus={focusedAnswerId === m.id}
+                focus={focusedAnswerId === m.messageId}
                 updateAnswer={setAnswer}
               />
             </SlackMessage>
@@ -607,16 +570,16 @@ const MessagesAndDayComponents = (
           <div key={index + "msg2"}>
             <SlackMessage
               message={m}
-              focus={focusedId === m.id}
-              focusAnswer={focusedAnswerId === m.id}
-              onClick={() => clickSelect(m.id)}
+              focus={focusedId === m.messageId}
+              focusAnswer={focusedAnswerId === m.messageId}
+              onClick={() => clickSelect(m.messageId)}
               back={() => back()}
             >
               {m.thread && <SlackMessageThread messages={m.thread} />}
               <SlackAnswer
                 answer={m.answer}
                 event={m}
-                focus={focusedAnswerId === m.id}
+                focus={focusedAnswerId === m.messageId}
                 updateAnswer={setAnswer}
               />
             </SlackMessage>
@@ -628,19 +591,9 @@ const MessagesAndDayComponents = (
   if (ComponentsArray.length === 0) {
     ComponentsArray.push(
       <div className="h-[60px]" key={"msgData"}>
-        <MessageDate date={new Date().toISOString()} key={0} />
+        <SeparatorDate date={new Date().toISOString()} key={0} />
       </div>
     );
   }
   return ComponentsArray;
 };
-
-function isSameDay(date1: string, date2: string) {
-  const d1 = new Date(date1);
-  const d2 = new Date(date2);
-  return (
-    d1.getFullYear() === d2.getFullYear() &&
-    d1.getMonth() === d2.getMonth() &&
-    d1.getDate() === d2.getDate()
-  );
-}

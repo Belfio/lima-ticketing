@@ -57,7 +57,7 @@ const SlackAnswer = ({
       <div className="block ">
         <div className="mt-0 text-gray-600 text-sm ml-2 flex items-center italic ">
           <Textarea
-            value={answer?.message}
+            value={answer?.text}
             onChange={(e) => updateAnswer(e.target.value)}
             name="message"
             className="h-auto w-full text-sm text-left resize-none mx-2 mt-2 "
@@ -98,7 +98,7 @@ const SlackAnswer = ({
               value={`PUBLISH`}
               disabled={
                 answer?.status === "GENERATING" ||
-                answer?.message === "" ||
+                answer?.text === "" ||
                 isSubmitting
               }
             >
@@ -112,11 +112,7 @@ const SlackAnswer = ({
               name="creationDate"
               value={String(event.creationDate)}
             />
-            <input
-              type="hidden"
-              name="answer"
-              value={String(answer?.message)}
-            />
+            <input type="hidden" name="answer" value={String(answer?.text)} />
           </div>
         </fetcher.Form>
       </div>

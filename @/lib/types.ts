@@ -1,10 +1,12 @@
 export type MessageType = {
-  id: string;
-  message: string;
+  messageId: string;
+  communityId: string;
+  text: string;
   creationDate: string;
   author: string;
   threadId?: string;
   channel: string;
+  link?: string;
   status:
     | "PENDING"
     | "ARCHIVED"
@@ -12,13 +14,19 @@ export type MessageType = {
     | "PUBLISHED"
     | "PUBLISHING"
     | "GENERATING";
-  answer?: string;
-  thread?: string;
+  answer?: MessageType;
+  thread?: MessageType[];
 };
 
 export type CommunityType = {
-  id: string;
+  communityId: string;
   name: string;
   description: string;
   creationDate: string;
+  settings: {
+    traininng: {
+      status: "PENDING" | "TRAINING" | "TRAINED";
+      lastTrainingDate: string;
+    };
+  };
 };

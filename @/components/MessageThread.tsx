@@ -69,7 +69,7 @@ const SlackMessageThread: React.FC<SlackMessageProps> = ({ messages }) => {
 
                 {/* <div className="ml-2 text-gray-500 text-xs">{time}</div> */}
                 <div className="mt-0 text-gray-600 text-xs ml-1">
-                  {parsedText(message?.message)}
+                  {parsedText(message?.text)}
                 </div>
               </div>
             </div>
