@@ -1,39 +1,25 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useFetcher } from "@remix-run/react";
 import { cn } from "@/lib/utils";
-import { Separator } from "@/components/ui/separator";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import SlackEmpty from "./MessageEmpty";
 import DialogPublish from "./DialogPublish";
 import { CommunityType, MessageType } from "@/lib/types";
 import DialogTrainBot from "./DialogTrainBot";
 import Controller from "./Controller";
 import FeedUI from "./FeedUI";
 import KeyboardController from "./KeyboardController";
-
-/*
-Come posso dividere sto malloppo...
-Abbiamo:
-- un sistema di gestione tastiera
-- un sistema di gestione scrittura
-- un sistema di gestione presentazione messaggi e scroll
-- training dialog
-- publish dialog
-*/
+import FeedPlaceholder from "./FeedPlaceholder";
 
 export default function Feed({
   className,
   notActive,
   messages = [],
   community,
-  setWriting,
   filters,
 }: {
   className?: string;
   notActive?: boolean;
   messages?: MessageType[];
   community: CommunityType;
-  setWriting: (flag: boolean) => void;
   filters: {
     hideArchived: boolean;
     hideNonRequests: boolean;
@@ -52,29 +38,30 @@ export default function Feed({
   const [isTrainBot, setTrainBot] = useState(false);
   const navigate = useNavigate();
   const fetcher = useFetcher();
-  // useEffect(() => {
-  //   const filtersMsgs = messages.filter((m) => {
-  //     if (filters.hideArchived && m?.status === "ARCHIVED") return false;
-  //     if (filters.hideNonRequests) return false;
-  //     return true;
-  //   });
-  //   let newSetOfMsgs = [
-  //     ...filtersMsgs.slice(
-  //       msgIndex,
-  //       filtersMsgs.length > 6 ? 6 : filtersMsgs.length
-  //     ),
-  //   ];
-  //   if (newSetOfMsgs.length === 0) {
-  //     setIndex(0);
-  //   }
-  //   newSetOfMsgs = [
-  //     ...filtersMsgs.slice(0, filtersMsgs.length > 6 ? 6 : filtersMsgs.length),
-  //   ];
-  //   setMsgs([...newSetOfMsgs]);
-  // }, [filters.hideArchived, filters.hideNonRequests]);
 
   useEffect(() => {
-    if (msgIndex < 2) {
+    const filtersMsgs = messages.filter((m) => {
+      if (filters.hideArchived && m?.status === "ARCHIVED") return false;
+      if (filters.hideNonRequests) return false;
+      return true;
+    });
+    let newSetOfMsgs = [
+      ...filtersMsgs.slice(
+        msgIndex,
+        filtersMsgs.length > 6 ? 6 : filtersMsgs.length
+      ),
+    ];
+    if (newSetOfMsgs.length === 0) {
+      setIndex(0);
+    }
+    newSetOfMsgs = [
+      ...filtersMsgs.slice(0, filtersMsgs.length > 6 ? 6 : filtersMsgs.length),
+    ];
+    setMsgs([...newSetOfMsgs]);
+  }, [filters.hideArchived, filters.hideNonRequests]);
+
+  useEffect(() => {
+    if (msgIndex < 1) {
       setMsgs([
         ...messages.slice(0, messages.length > 6 ? 6 : messages.length),
       ]);
@@ -82,14 +69,6 @@ export default function Feed({
       setMsgs([...messages.slice(msgIndex - 1, msgIndex + 5)]);
     }
   }, [messages]);
-
-  useEffect(() => {
-    if (focusedAnswerId !== "") {
-      setWriting(true);
-    } else {
-      setWriting(false);
-    }
-  }, [focusedAnswerId]);
 
   useEffect(() => {
     if (key === "") return;
@@ -470,22 +449,7 @@ export default function Feed({
                 <DialogTrainBot open={isTrainBot} closeDialog={setTrainBot} />
               </div>
             )}
-            {notActive && (
-              <>
-                <div className="relative h-4">
-                  <div className="absolute z-10 w-full">
-                    <div className=" m-auto border border-solid rounded-3xl bg-white card-shadow text-center font-bold w-fit px-4 py-1 text-sm">
-                      Not active
-                    </div>
-                  </div>
-                  <Separator className="w-full absolute mt-4 z-0" />
-                </div>
-
-                <ScrollArea className="h-[180px] overflow-auto p-4">
-                  <SlackEmpty />
-                </ScrollArea>
-              </>
-            )}
+            {notActive && <FeedPlaceholder />}
           </div>
         </div>
         <p className="text-xs text-gray-500 text-left font-normal mt-4 ">
