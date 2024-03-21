@@ -17,7 +17,6 @@ export default function Index() {
       <Button>Click me</Button>
       <Feed
         community={community}
-        setWriting={() => {}}
         filters={{ hideArchived: true, hideNonRequests: true }}
         messages={messages}
       />
