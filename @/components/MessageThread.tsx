@@ -1,5 +1,4 @@
 import React, { useEffect } from "react";
-import EmojiConvertor from "emoji-js";
 import { CornerDownRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { MessageType } from "@/lib/types";

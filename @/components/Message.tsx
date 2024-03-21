@@ -95,7 +95,7 @@ const SlackMessage: React.FC<SlackMessageProps> = ({
               <div className="ml-2 text-gray-500 text-xs">{time}</div>
             </div>
             <div
-              className={`mt-0 text-gray-600 text-sm  ${
+              className={`mt-0 text-gray-600 text-sm  text-left ml-2 ${
                 !isHighlighted() && "opacity-60"
               }`}
             >
