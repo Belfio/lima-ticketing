@@ -16,6 +16,7 @@ export type MessageType = {
     | "GENERATING";
   answer?: MessageType;
   thread?: MessageType[];
+  userProfile?: UserType;
 };
 
 export type CommunityType = {
@@ -29,4 +30,15 @@ export type CommunityType = {
       lastTrainingDate: string;
     };
   };
+};
+
+export type UserType = {
+  userId: string;
+  name: string;
+  email: string;
+  creationDate: string;
+  lastLoginDate: string;
+  status: "PENDING" | "ACTIVE" | "INACTIVE";
+  role: "USER" | "ADMIN";
+  img_url: string;
 };

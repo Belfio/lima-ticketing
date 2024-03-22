@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useFetcher } from "@remix-run/react";
+import { useNavigate, useFetcher, useRevalidator } from "@remix-run/react";
 import { cn } from "@/lib/utils";
 import DialogPublish from "./DialogPublish";
 import { CommunityType, MessageType } from "@/lib/types";
@@ -12,68 +12,122 @@ import FeedPlaceholder from "./FeedPlaceholder";
 export default function Feed({
   className,
   notActive,
-  messages = [],
+  latestMessages = [],
   community,
-  filters,
-}: {
+}: // filters,
+{
   className?: string;
   notActive?: boolean;
-  messages?: MessageType[];
+  latestMessages?: MessageType[];
   community: CommunityType;
   filters: {
     hideArchived: boolean;
     hideNonStarred: boolean;
   };
 }) {
+  const [isInit, setInit] = useState(false);
   const [msgIndex, setIndex] = useState(-1);
   const [focusedId, setFocusedId] = useState("");
   const [focusedAnswerId, setFocusedAnswerId] = useState("");
+
   const [prevKey, setPrevKey] = useState("");
   const [key, setKey] = useState("");
 
-  const [msgs, setMsgs] = useState<MessageType[]>([
-    ...messages.slice(0, messages.length > 6 ? 6 : messages.length),
-  ]);
+  const [messages, setMessages] = useState<MessageType[]>([]);
+  const [msgsForUI, setMsgsForUI] = useState<{ list: MessageType[] }>({
+    list: [],
+  });
+  const [newMsgs, setNewMsgs] = useState<MessageType[]>([]);
+
   const [isAlertPublishOpen, setIsAlertPublishOpen] = useState(false);
   const [isTrainBot, setTrainBot] = useState(false);
+
   const navigate = useNavigate();
   const fetcher = useFetcher();
 
+  // -------------------
+  // Initialization and Polling management
+  // Manage the arrival of new messages during the polling
+  // I store the old messages in the localStorage and I initialize the state of the variable msgsForUI with them
+  // The state varibale msgsForUI is the one that is displayed in the UI
+  // All the latest messages are coming from the loader and stored in the variable latestMessages
+  // -------------------
   useEffect(() => {
-    const filtersMsgs = messages.filter((m) => {
-      if (filters.hideArchived && m.status === "ARCHIVED") return false;
-      if (filters.hideNonStarred && m.status !== "STARRED") return false;
-      return true;
-    });
+    console.log("Running the init");
+    if (isInit) return;
+    setInit(true);
+    const messages: MessageType[] = JSON.parse(
+      window.localStorage.getItem("messages") || "[]"
+    );
+    if (messages.length === 0 && latestMessages.length === 0) return;
 
-    let newSetOfMsgs = [
-      ...filtersMsgs.slice(
-        msgIndex,
-        filtersMsgs.length > 6 ? 6 : filtersMsgs.length
-      ),
-    ];
-    if (newSetOfMsgs.length === 0) {
-      setIndex(-1);
-      newSetOfMsgs = [
-        ...filtersMsgs.slice(
-          0,
-          filtersMsgs.length > 6 ? 6 : filtersMsgs.length
-        ),
-      ];
+    if (messages.length === 0) {
+      window.localStorage.setItem(
+        "messages",
+        JSON.stringify([...latestMessages])
+      );
+      setMsgsForUI({
+        list: [...latestMessages.slice(0, Math.min(latestMessages.length, 6))],
+      });
     }
-    setMsgs([...newSetOfMsgs]);
-  }, [filters.hideArchived, filters.hideNonStarred]);
 
+    if (messages.length > 0) {
+      if (latestMessages.length > 0) {
+        const newMsgs = latestMessages.filter((m) => {
+          return new Date(m.creationDate) > new Date(messages[0].creationDate);
+        });
+        setNewMsgs(newMsgs);
+      }
+      setMessages(messages);
+      setMsgsForUI({
+        list: [...messages.slice(0, Math.min(messages.length, 6))],
+      });
+    }
+  }, [isInit, latestMessages]);
+
+  // -------------------
+  // Polling
+  // -------------------
+  const revalidator = useRevalidator();
   useEffect(() => {
-    if (msgIndex < 1) {
-      setMsgs([
-        ...messages.slice(0, messages.length > 6 ? 6 : messages.length),
-      ]);
-    } else {
-      setMsgs([...messages.slice(msgIndex - 1, msgIndex + 5)]);
-    }
-  }, [messages]);
+    if (focusedAnswerId !== "") return;
+    const intervalId = setInterval(() => {
+      revalidator.revalidate();
+    }, 9000);
+    return () => clearInterval(intervalId);
+  });
 
+  // -------------------
+  // Updates msgsForUI with the filters
+  // -------------------
+  // useEffect(() => {
+  //   const filtersMsgs = messages.filter((m) => {
+  //     if (filters.hideArchived && m.status === "ARCHIVED") return false;
+  //     if (filters.hideNonStarred && m.status !== "STARRED") return false;
+  //     return true;
+  //   });
+
+  //   let newSetOfMsgs = [
+  //     ...filtersMsgs.slice(
+  //       msgIndex,
+  //       filtersMsgs.length > 6 ? 6 : filtersMsgs.length
+  //     ),
+  //   ];
+  //   if (newSetOfMsgs.length === 0) {
+  //     setIndex(-1);
+  //     newSetOfMsgs = [
+  //       ...filtersMsgs.slice(
+  //         0,
+  //         filtersMsgs.length > 6 ? 6 : filtersMsgs.length
+  //       ),
+  //     ];
+  //   }
+  //   setMsgsForUI({ list: [...newSetOfMsgs] });
+  // }, [filters.hideArchived, filters.hideNonStarred]);
+
+  // -------------------
+  // Keyboard events handler
+  // -------------------
   useEffect(() => {
     if (key === "") return;
     if (key in keysLib) keysLib[key as keyof typeof keysLib]();
@@ -94,7 +148,7 @@ export default function Feed({
       setIndex((currentIndex) => currentIndex + 1);
       setPrevKey("ArrowDown");
       if (msgIndex > 0) {
-        setMsgs([...messages.slice(msgIndex, msgIndex + 6)]);
+        setMsgsForUI({ list: [...messages.slice(msgIndex, msgIndex + 6)] });
       }
     },
 
@@ -114,11 +168,13 @@ export default function Feed({
       setIndex((currentIndex) => currentIndex - 1);
       setPrevKey("ArrowUp");
       if (msgIndex < 2) {
-        setMsgs([
-          ...messages.slice(0, messages.length > 6 ? 6 : messages.length),
-        ]);
+        setMsgsForUI({
+          list: [
+            ...messages.slice(0, messages.length > 6 ? 6 : messages.length),
+          ],
+        });
       } else {
-        setMsgs([...messages.slice(msgIndex - 1, msgIndex + 5)]);
+        setMsgsForUI({ list: [...messages.slice(msgIndex - 1, msgIndex + 5)] });
       }
     },
     Enter: () => {
@@ -201,7 +257,7 @@ export default function Feed({
     archive: async () => {
       try {
         const id = messages[msgIndex].messageId;
-        const newMsgs: MessageType[] = msgs.map((m: MessageType) => {
+        const newMsgs: MessageType[] = msgsForUI.list.map((m: MessageType) => {
           if (m.messageId === id) {
             return {
               ...m,
@@ -211,7 +267,7 @@ export default function Feed({
             return m;
           }
         });
-        setMsgs(newMsgs);
+        setMsgsForUI({ list: newMsgs });
 
         const formData = new FormData();
         formData.append(
@@ -229,7 +285,7 @@ export default function Feed({
     unarchive: async () => {
       try {
         const id = messages[msgIndex].messageId;
-        const newMsgs: MessageType[] = msgs.map((m: MessageType) => {
+        const newMsgs: MessageType[] = msgsForUI.list.map((m: MessageType) => {
           if (m.messageId === id) {
             return {
               ...m,
@@ -239,7 +295,7 @@ export default function Feed({
             return m;
           }
         });
-        setMsgs(newMsgs);
+        setMsgsForUI({ list: newMsgs });
 
         const formData = new FormData();
         formData.append("creationDate", messages[msgIndex].creationDate);
@@ -254,7 +310,7 @@ export default function Feed({
     starred: async () => {
       try {
         const id = messages[msgIndex].messageId;
-        const newMsgs: MessageType[] = msgs.map((m: MessageType) => {
+        const newMsgs: MessageType[] = msgsForUI.list.map((m: MessageType) => {
           if (m.messageId === id) {
             return {
               ...m,
@@ -264,7 +320,7 @@ export default function Feed({
             return m;
           }
         });
-        setMsgs(newMsgs);
+        setMsgsForUI({ list: newMsgs });
 
         const formData = new FormData();
         formData.append("creationDate", messages[msgIndex].creationDate);
@@ -279,7 +335,7 @@ export default function Feed({
     nonstarred: async () => {
       try {
         const id = messages[msgIndex].messageId;
-        const newMsgs = msgs.map((m) => {
+        const newMsgs = msgsForUI.list.map((m) => {
           if (m.messageId === id) {
             return {
               ...m,
@@ -289,7 +345,7 @@ export default function Feed({
             return m;
           }
         });
-        setMsgs(newMsgs);
+        setMsgsForUI({ list: newMsgs });
 
         const formData = new FormData();
         formData.append("creationDate", messages[msgIndex].creationDate);
@@ -302,7 +358,9 @@ export default function Feed({
     },
 
     updateAnswer: async () => {
-      const msg: MessageType = msgs.filter((m) => m.messageId === focusedId)[0];
+      const msg: MessageType = msgsForUI.list.filter(
+        (m) => m.messageId === focusedId
+      )[0];
       const answer = msg.answer;
       if (!msg) return;
       try {
@@ -320,7 +378,7 @@ export default function Feed({
       console.log("publish");
       try {
         const id = messages[msgIndex].messageId;
-        const newMsgs: MessageType[] = msgs.map((m) => {
+        const newMsgs: MessageType[] = msgsForUI.list.map((m) => {
           if (m.messageId === id) {
             return {
               ...m,
@@ -331,7 +389,7 @@ export default function Feed({
             return m;
           }
         });
-        setMsgs(newMsgs);
+        setMsgsForUI({ list: newMsgs });
         setIsAlertPublishOpen(false);
         const newMsg = newMsgs.filter((m) => m.messageId === id)[0];
         if (!newMsg) throw new Error("no message found");
@@ -354,7 +412,7 @@ export default function Feed({
 
       try {
         const id = messages[msgIndex].messageId;
-        const newMsgs: MessageType[] = msgs.map((m) => {
+        const newMsgs: MessageType[] = msgsForUI.list.map((m) => {
           if (m.messageId === id) {
             return {
               ...m,
@@ -364,7 +422,7 @@ export default function Feed({
             return m;
           }
         });
-        setMsgs(newMsgs);
+        setMsgsForUI({ list: newMsgs });
 
         const newMsg = newMsgs.filter((m) => m.messageId === id)[0];
         if (!newMsg) throw new Error("no message found");
@@ -414,6 +472,7 @@ export default function Feed({
         return false;
     }
   };
+
   return (
     <KeyboardController
       setKey={setKey}
@@ -431,12 +490,13 @@ export default function Feed({
           >
             {!notActive && (
               <div className="flex-1  p-0 sm:p-4 sm:pt-0">
-                {msgIndex}
+                {msgIndex} +{messages.length}+{msgsForUI.list.length} +
+                {newMsgs.length}
                 <FeedUI
-                  messages={msgs}
+                  messages={msgsForUI.list}
                   focusedId={focusedId}
                   focusedAnswerId={focusedAnswerId}
-                  setMsgs={setMsgs}
+                  setMsgs={(list) => setMsgsForUI({ list })}
                   clickSelect={messagesLib.clickSelect}
                   back={messagesLib.deselect}
                 />
@@ -444,7 +504,7 @@ export default function Feed({
                   open={isAlertPublishOpen}
                   closeDialog={() => setIsAlertPublishOpen(false)}
                   msg={
-                    msgs.filter(
+                    msgsForUI.list.filter(
                       (m) => m.messageId === focusedAnswerId
                     )[0] as MessageType
                   }
