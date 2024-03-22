@@ -1,5 +1,8 @@
-import type { ActionFunctionArgs, MetaFunction } from "@remix-run/node";
-import { Button } from "@/components/ui/button";
+import {
+  redirect,
+  type ActionFunctionArgs,
+  type MetaFunction,
+} from "@remix-run/node";
 import Feed from "@/components/Feed";
 import { CommunityType, MessageType } from "@/lib/types";
 
@@ -13,6 +16,23 @@ export const meta: MetaFunction = () => {
   ];
 };
 
+// Vorrei che fosse "really presentable" quindi mi servono un paio di animazioni
+// e un codice pulito, una struttura che permetta a chiunque di utilizzare il sito.
+
+// 1 - Concetto iniziale è che sia semplice
+// 2 - Veloce ed efficace
+// 3 - Abbia una possibilità di essere usato?
+// 4 - Polling for new messages
+// 5 -
+// Ricominciare il discorso di lavoro con AI
+
+export async function action({ request }: ActionFunctionArgs) {
+  const formData = await request.formData();
+  const json = Object.fromEntries(formData);
+  console.log(json);
+  return redirect("/");
+}
+
 export default function Index() {
   return (
     <div className=" w-[1000px] p-12 m-auto text-center">
@@ -24,10 +44,6 @@ export default function Index() {
       />
     </div>
   );
-}
-
-export async function action({ request }: ActionFunctionArgs) {
-  return {};
 }
 
 const community: CommunityType = {

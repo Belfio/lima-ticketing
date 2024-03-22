@@ -45,14 +45,13 @@ export default function Feed({
       if (filters.hideNonStarred && m.status !== "STARRED") return false;
       return true;
     });
-    console.log("filtersMsgs?", filtersMsgs.length);
+
     let newSetOfMsgs = [
       ...filtersMsgs.slice(
         msgIndex,
         filtersMsgs.length > 6 ? 6 : filtersMsgs.length
       ),
     ];
-    console.log("newSetOfMsgs?", newSetOfMsgs.length);
     if (newSetOfMsgs.length === 0) {
       setIndex(-1);
       newSetOfMsgs = [
@@ -66,7 +65,6 @@ export default function Feed({
   }, [filters.hideArchived, filters.hideNonStarred]);
 
   useEffect(() => {
-    console.log("messages?");
     if (msgIndex < 1) {
       setMsgs([
         ...messages.slice(0, messages.length > 6 ? 6 : messages.length),
@@ -77,9 +75,8 @@ export default function Feed({
   }, [messages]);
 
   useEffect(() => {
-    console.log("key?", key);
     if (key === "") return;
-    if (key in keysLib) keysLib[key]();
+    if (key in keysLib) keysLib[key as keyof typeof keysLib]();
   }, [key]);
 
   const keysLib = {
@@ -204,7 +201,7 @@ export default function Feed({
     archive: async () => {
       try {
         const id = messages[msgIndex].messageId;
-        const newMsgs = msgs.map((m: MessageType) => {
+        const newMsgs: MessageType[] = msgs.map((m: MessageType) => {
           if (m.messageId === id) {
             return {
               ...m,
@@ -232,7 +229,7 @@ export default function Feed({
     unarchive: async () => {
       try {
         const id = messages[msgIndex].messageId;
-        const newMsgs = msgs.map((m: MessageType) => {
+        const newMsgs: MessageType[] = msgs.map((m: MessageType) => {
           if (m.messageId === id) {
             return {
               ...m,
@@ -257,7 +254,7 @@ export default function Feed({
     starred: async () => {
       try {
         const id = messages[msgIndex].messageId;
-        const newMsgs = msgs.map((m: MessageType) => {
+        const newMsgs: MessageType[] = msgs.map((m: MessageType) => {
           if (m.messageId === id) {
             return {
               ...m,
@@ -313,7 +310,7 @@ export default function Feed({
         formData.append("creationDate", msg.creationDate);
         formData.append("button", "UPDATE_ANSWER");
         formData.append("answer", String(answer));
-        fetcher.submit(formData, { method: "post" });
+        fetcher.submit(formData, { method: "post", action: "/API" });
       } catch (error) {
         console.log("error updatingAnswer", error);
       }

@@ -10,7 +10,6 @@ export default function KeyboardController({
   shouldPreventDefault: (key: string) => boolean;
 }) {
   useEffect(() => {
-    console.log("running this?");
     const handleKey = (e: KeyboardEvent) => {
       if (shouldPreventDefault(e.key)) {
         console.log("preventing");
