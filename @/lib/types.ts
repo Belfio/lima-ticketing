@@ -10,7 +10,7 @@ export type MessageType = {
   status:
     | "PENDING"
     | "ARCHIVED"
-    | "OPPORTUNITY"
+    | "STARRED"
     | "PUBLISHED"
     | "PUBLISHING"
     | "GENERATING";

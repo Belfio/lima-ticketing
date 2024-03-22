@@ -22,7 +22,7 @@ export default function Feed({
   community: CommunityType;
   filters: {
     hideArchived: boolean;
-    hideNonRequests: boolean;
+    hideNonStarred: boolean;
   };
 }) {
   const [msgIndex, setIndex] = useState(-1);
@@ -41,26 +41,32 @@ export default function Feed({
 
   useEffect(() => {
     const filtersMsgs = messages.filter((m) => {
-      if (filters.hideArchived && m?.status === "ARCHIVED") return false;
-      if (filters.hideNonRequests) return false;
+      if (filters.hideArchived && m.status === "ARCHIVED") return false;
+      if (filters.hideNonStarred && m.status !== "STARRED") return false;
       return true;
     });
+    console.log("filtersMsgs?", filtersMsgs.length);
     let newSetOfMsgs = [
       ...filtersMsgs.slice(
         msgIndex,
         filtersMsgs.length > 6 ? 6 : filtersMsgs.length
       ),
     ];
+    console.log("newSetOfMsgs?", newSetOfMsgs.length);
     if (newSetOfMsgs.length === 0) {
-      setIndex(0);
+      setIndex(-1);
+      newSetOfMsgs = [
+        ...filtersMsgs.slice(
+          0,
+          filtersMsgs.length > 6 ? 6 : filtersMsgs.length
+        ),
+      ];
     }
-    newSetOfMsgs = [
-      ...filtersMsgs.slice(0, filtersMsgs.length > 6 ? 6 : filtersMsgs.length),
-    ];
     setMsgs([...newSetOfMsgs]);
-  }, [filters.hideArchived, filters.hideNonRequests]);
+  }, [filters.hideArchived, filters.hideNonStarred]);
 
   useEffect(() => {
+    console.log("messages?");
     if (msgIndex < 1) {
       setMsgs([
         ...messages.slice(0, messages.length > 6 ? 6 : messages.length),
@@ -71,6 +77,7 @@ export default function Feed({
   }, [messages]);
 
   useEffect(() => {
+    console.log("key?", key);
     if (key === "") return;
     if (key in keysLib) keysLib[key]();
   }, [key]);
@@ -85,7 +92,6 @@ export default function Feed({
           await messagesLib.updateAnswer();
         })();
       }
-      console.log("ora qua roba");
       setFocusedAnswerId("");
       setFocusedId((messages[msgIndex + 1] as MessageType).messageId);
       setIndex((currentIndex) => currentIndex + 1);
@@ -173,13 +179,13 @@ export default function Feed({
     r: () => {
       if (focusedAnswerId === "" && focusedId !== "") {
         const msg = messages.filter((m) => m.messageId === focusedId)[0];
-        if (msg.status === "OPPORTUNITY") {
+        if (msg.status === "STARRED") {
           (async () => {
-            await messagesLib.nonrelevant();
+            await messagesLib.nonstarred();
           })();
         } else {
           (async () => {
-            await messagesLib.relevant();
+            await messagesLib.starred();
           })();
         }
       }
@@ -248,14 +254,14 @@ export default function Feed({
       }
     },
 
-    relevant: async () => {
+    starred: async () => {
       try {
         const id = messages[msgIndex].messageId;
         const newMsgs = msgs.map((m: MessageType) => {
           if (m.messageId === id) {
             return {
               ...m,
-              status: "OPPORTUNITY",
+              status: "STARRED",
             };
           } else {
             return m;
@@ -265,7 +271,7 @@ export default function Feed({
 
         const formData = new FormData();
         formData.append("creationDate", messages[msgIndex].creationDate);
-        formData.append("button", "RELEVANT");
+        formData.append("button", "starred");
         formData.append("id", community.communityId);
         fetcher.submit(formData, { method: "post" });
       } catch (error) {
@@ -273,14 +279,14 @@ export default function Feed({
       }
     },
 
-    nonrelevant: async () => {
+    nonstarred: async () => {
       try {
         const id = messages[msgIndex].messageId;
         const newMsgs = msgs.map((m) => {
           if (m.messageId === id) {
             return {
               ...m,
-              opportunity: false,
+              STARRED: false,
             };
           } else {
             return m;
@@ -290,7 +296,7 @@ export default function Feed({
 
         const formData = new FormData();
         formData.append("creationDate", messages[msgIndex].creationDate);
-        formData.append("button", "NONRELEVANT");
+        formData.append("button", "NONstarred");
         formData.append("id", community.communityId);
         fetcher.submit(formData, { method: "post" });
       } catch (error) {

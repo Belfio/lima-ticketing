@@ -1,27 +1,33 @@
-import type { MetaFunction } from "@remix-run/node";
+import type { ActionFunctionArgs, MetaFunction } from "@remix-run/node";
 import { Button } from "@/components/ui/button";
 import Feed from "@/components/Feed";
 import { CommunityType, MessageType } from "@/lib/types";
 
 export const meta: MetaFunction = () => {
   return [
-    { title: "New Remix App" },
-    { name: "description", content: "Welcome to Remix!" },
+    { title: "Lima ticketing system" },
+    {
+      name: "description",
+      content: "A gamified AI powered ticketing system you would love to use.",
+    },
   ];
 };
 
 export default function Index() {
   return (
-    <div className=" w-[1000px] p-12">
-      <h1>Welcome to Remix ci siamo evvai</h1>
-      <Button>Click me</Button>
+    <div className=" w-[1000px] p-12 m-auto text-center">
+      <h1 className="text-3xl font-bold">Welcome to Lima ticketing ⚡ </h1>
       <Feed
         community={community}
-        filters={{ hideArchived: true, hideNonRequests: true }}
+        filters={{ hideArchived: true, hideNonStarred: true }}
         messages={messages}
       />
     </div>
   );
+}
+
+export async function action({ request }: ActionFunctionArgs) {
+  return {};
 }
 
 const community: CommunityType = {
@@ -63,7 +69,7 @@ const messages: MessageType[] = [
     creationDate: new Date().toISOString(),
     author: "Alice Johnson",
     channel: "general",
-    status: "PENDING",
+    status: "STARRED",
   },
   {
     messageId: "4",

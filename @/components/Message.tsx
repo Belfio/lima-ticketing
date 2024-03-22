@@ -35,14 +35,14 @@ const SlackMessage: React.FC<SlackMessageProps> = ({
   } ${PMAM}`;
 
   const fetcher = useFetcher();
-  // a message should be highlighted if it's an opportunity and has no thread messages OR if contains thread_messages and the last one is ananswered
+  // a message should be highlighted if it's an STARRED and has no thread messages OR if contains thread_messages and the last one is ananswered
   const isHighlighted = () => {
     if (message.status === "ARCHIVED") {
       return false;
     }
 
     if (!message.thread) {
-      return message?.status === "OPPORTUNITY";
+      return message?.status === "STARRED";
     }
 
     return false;
@@ -169,14 +169,10 @@ const SlackMessage: React.FC<SlackMessageProps> = ({
                       className="text-gray-500 font-bold text-xs bg-white shadow-sm"
                       name="button"
                       value={
-                        message.status === "OPPORTUNITY"
-                          ? "NONRELAVANT"
-                          : "RELEVANT"
+                        message.status === "STARRED" ? "NONRELAVANT" : "starred"
                       }
                     >
-                      {message.status === "OPPORTUNITY"
-                        ? "Irrelevant"
-                        : "Relevant"}
+                      {message.status === "STARRED" ? "Irstarred" : "starred"}
                       <div className="border-solid border-gray-500 border-[1px] rounded-md p-1 ml-1 w-[24px] h-[24px] text-center">
                         <span className="w-[14px] h-[14px] font-normal ">
                           R

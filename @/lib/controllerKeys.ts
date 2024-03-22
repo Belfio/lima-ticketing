@@ -85,13 +85,13 @@ export const handleKey = (e: KeyboardEvent) => {
     if (focusedAnswerId === "" && focusedId !== "") {
       e.preventDefault();
       const msg = messages.filter((m) => m.messageId === focusedId)[0];
-      if (msg.status === "OPPORTUNITY") {
+      if (msg.status === "STARRED") {
         (async () => {
-          await nonrelevant();
+          await nonstarred();
         })();
       } else {
         (async () => {
-          await relevant();
+          await starred();
         })();
       }
     }
@@ -186,14 +186,14 @@ const unarchive = async () => {
   }
 };
 
-const relevant = async () => {
+const starred = async () => {
   try {
     const id = messages[msgIndex].messageId;
     const newMsgs = msgs.map((m) => {
       if (m.messageId === id) {
         return {
           ...m,
-          opportunity: true,
+          STARRED: true,
         };
       } else {
         return m;
@@ -203,7 +203,7 @@ const relevant = async () => {
 
     const formData = new FormData();
     formData.append("creationDate", messages[msgIndex].creationDate);
-    formData.append("button", "RELEVANT");
+    formData.append("button", "starred");
     formData.append("id", community.communityId);
     fetcher.submit(formData, { method: "post" });
   } catch (error) {
@@ -211,14 +211,14 @@ const relevant = async () => {
   }
 };
 
-const nonrelevant = async () => {
+const nonstarred = async () => {
   try {
     const id = messages[msgIndex].messageId;
     const newMsgs = msgs.map((m) => {
       if (m.messageId === id) {
         return {
           ...m,
-          opportunity: false,
+          STARRED: false,
         };
       } else {
         return m;
@@ -228,7 +228,7 @@ const nonrelevant = async () => {
 
     const formData = new FormData();
     formData.append("creationDate", messages[msgIndex].creationDate);
-    formData.append("button", "NONRELEVANT");
+    formData.append("button", "NONstarred");
     formData.append("id", community.communityId);
     fetcher.submit(formData, { method: "post" });
   } catch (error) {
