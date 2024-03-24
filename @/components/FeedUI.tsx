@@ -4,6 +4,8 @@ import SlackMessage from "./Message";
 import SlackAnswer from "./MessageAnswer";
 import SeparatorDate from "./MessageSeparatorDate";
 import SlackMessageThread from "./MessageThread";
+import { useInView, AnimatePresence, motion } from "framer-motion";
+import { useRef } from "react";
 
 export default function FeedUI({
   messages,
@@ -20,6 +22,9 @@ export default function FeedUI({
   clickSelect: (id: string) => void;
   back: () => void;
 }) {
+  const scope = useRef(null);
+  const isInView = useInView(scope, { once: true });
+
   const ComponentsArray: React.ReactNode[] = [];
   const setAnswer = (newAnswer: string) => {
     const newMsgs: MessageType[] = messages.map((m) => {
@@ -113,5 +118,21 @@ export default function FeedUI({
       </div>
     );
   }
-  return ComponentsArray;
+  return (
+    <div ref={scope} className="min-h-full">
+      <AnimatePresence>
+        {isInView &&
+          ComponentsArray.map((c, index) => (
+            <motion.div
+              key={index}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            >
+              {c}
+            </motion.div>
+          ))}
+      </AnimatePresence>
+    </div>
+  );
 }

@@ -129,7 +129,8 @@ const SlackMessage: React.FC<SlackMessageProps> = ({
           {!focusAnswer && (
             <>
               {(message?.status === "PENDING" ||
-                message?.status === "PUBLISHED") && (
+                message?.status === "PUBLISHED" ||
+                message.status === "STARRED") && (
                 <div className=" flex justify-end">
                   <fetcher.Form
                     method="post"
@@ -169,10 +170,10 @@ const SlackMessage: React.FC<SlackMessageProps> = ({
                       className="text-gray-500 font-bold text-xs bg-white shadow-sm"
                       name="button"
                       value={
-                        message.status === "STARRED" ? "NONRELAVANT" : "starred"
+                        message.status === "STARRED" ? "NONRELAVANT" : "STARRED"
                       }
                     >
-                      {message.status === "STARRED" ? "Irstarred" : "starred"}
+                      {message.status === "STARRED" ? "Not star" : "Star"}
                       <div className="border-solid border-gray-500 border-[1px] rounded-md p-1 ml-1 w-[24px] h-[24px] text-center">
                         <span className="w-[14px] h-[14px] font-normal ">
                           R

@@ -14,14 +14,26 @@ export const meta: MetaFunction = () => {
 };
 
 export default function Index() {
-  const { community, filters, messages } = useLoaderData<typeof loader>();
+  const loader: {
+    community: CommunityType;
+    messages: MessageType[];
+    filters: {
+      hideArchived: boolean;
+      hideNonStarred: boolean;
+    };
+  } = useLoaderData();
   return (
     <div className=" w-[1000px] p-12 m-auto text-center">
       <h1 className="text-3xl font-bold">Welcome to Lima ticketing ⚡ </h1>
+      <p>
+        This system mixes 2 paradigms :gamification and AI, to turn email
+        support into a fun and engaging experience.try it!
+      </p>
+      <div>Stats</div>
       <Feed
-        community={community}
-        filters={{ ...filters }}
-        latestMessages={messages}
+        community={loader?.community}
+        filters={{ ...loader?.filters }}
+        latestMessages={loader?.messages}
       />
     </div>
   );

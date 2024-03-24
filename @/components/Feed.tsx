@@ -276,7 +276,7 @@ export default function Feed({
         );
         formData.append("button", "ARCHIVE");
         formData.append("id", community.communityId);
-        fetcher.submit(formData, { method: "post" });
+        fetcher.submit(formData, { method: "post", action: "/API" });
       } catch (error) {
         console.log("error archiving", error);
       }
@@ -301,7 +301,7 @@ export default function Feed({
         formData.append("creationDate", messages[msgIndex].creationDate);
         formData.append("button", "UNARCHIVE");
         formData.append("id", community.communityId);
-        fetcher.submit(formData, { method: "post" });
+        fetcher.submit(formData, { method: "post", action: "/API" });
       } catch (error) {
         console.log("error archiving", error);
       }
@@ -326,7 +326,7 @@ export default function Feed({
         formData.append("creationDate", messages[msgIndex].creationDate);
         formData.append("button", "starred");
         formData.append("id", community.communityId);
-        fetcher.submit(formData, { method: "post" });
+        fetcher.submit(formData, { method: "post", action: "/API" });
       } catch (error) {
         console.log("error archiving", error);
       }
@@ -351,7 +351,7 @@ export default function Feed({
         formData.append("creationDate", messages[msgIndex].creationDate);
         formData.append("button", "NONstarred");
         formData.append("id", community.communityId);
-        fetcher.submit(formData, { method: "post" });
+        fetcher.submit(formData, { method: "post", action: "/API" });
       } catch (error) {
         console.log("error archiving", error);
       }
@@ -397,7 +397,7 @@ export default function Feed({
         formData.append("creationDate", newMsg.creationDate);
         formData.append("answer", String(newMsg.answer));
         formData.append("button", "PUBLISH");
-        fetcher.submit(formData, { method: "post" });
+        fetcher.submit(formData, { method: "post", action: "/API" });
       } catch (error) {
         console.log("error publishing", error);
         throw error;
@@ -431,7 +431,7 @@ export default function Feed({
         formData.append("answer", String(newMsg.answer));
         formData.append("button", "GENERATE");
         formData.append("id", community.communityId);
-        fetcher.submit(formData, { method: "post" });
+        fetcher.submit(formData, { method: "post", action: "/API" });
       } catch (error) {
         console.log("error archiving", error);
       }
@@ -478,7 +478,7 @@ export default function Feed({
       setKey={setKey}
       shouldPreventDefault={shouldPreventDefault}
     >
-      <div className={cn("w-full mt-4", className)}>
+      <div className={cn("w-full mt-4 min-h-screen", className)}>
         <Controller arrowDown={keysLib.ArrowDown} arrowUp={keysLib.ArrowUp} />
         <div className="w-full  sm:flex ">
           {/* <div className="w-0 sm:w-24 bg-[#3A123E] sm:h-auto text-white font-bold text-sm p-2 hidden sm:block"></div> */}
@@ -489,7 +489,7 @@ export default function Feed({
             )}
           >
             {!notActive && (
-              <div className="flex-1  p-0 sm:p-4 sm:pt-0">
+              <div className="flex-1  p-0 sm:p-4 sm:pt-0 h-full">
                 {msgIndex} +{messages.length}+{msgsForUI.list.length} +
                 {newMsgs.length}
                 <FeedUI
