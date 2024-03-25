@@ -55,6 +55,7 @@ export default function Feed({
   useEffect(() => {
     console.log("Running the init");
     if (isInit) return;
+    console.log("Init is running");
     setInit(true);
     const messages: MessageType[] = JSON.parse(
       window.localStorage.getItem("messages") || "[]"
